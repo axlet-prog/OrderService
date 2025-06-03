@@ -9,7 +9,7 @@ public class CartMapper {
     public static CartResponseDto mapListCartItemsDtoToResponse(List<CartItemDto> cartItemDtoList) {
         int totalPrice = 0;
         for (CartItemDto cartItemDto : cartItemDtoList) {
-            totalPrice += cartItemDto.getPrice();
+            totalPrice += cartItemDto.getPrice() * cartItemDto.getQuantity();
         }
         return CartResponseDto.builder()
                 .cartItems(cartItemDtoList)

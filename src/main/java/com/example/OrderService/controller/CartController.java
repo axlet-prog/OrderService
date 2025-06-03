@@ -23,6 +23,11 @@ public class CartController {
         this.cartService = cartService;
     }
 
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("pong");
+    }
+
     @GetMapping
     public ResponseEntity<CartResponseDto> getCart(@RequestHeader("Authorization") String bearerToken) {
         List<CartItemDto> items = cartService.getCartItems(bearerToken);
@@ -40,8 +45,8 @@ public class CartController {
     }
 
     @DeleteMapping("/remove_item")
-    public ResponseEntity<Void> removeMenuItem(@RequestParam("itemId") long itemId, @RequestHeader("Authorization") String bearerToken) {
-        cartService.removeCartItem(itemId, bearerToken);
+    public ResponseEntity<Void> removeMenuItem(@RequestParam("itemId") long itemId, @RequestParam(value = "quantity", defaultValue = "1") int quantity, @RequestHeader("Authorization") String bearerToken) {
+        cartService.removeCartItem(itemId, quantity, bearerToken);
         return ResponseEntity.ok().build();
     }
 

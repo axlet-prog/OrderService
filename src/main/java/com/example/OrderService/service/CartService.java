@@ -47,12 +47,17 @@ public class CartService {
     public CartItem addCardItem(long itemId, int quantity, String bearerToken) {
         getInfo(itemId);
         long userId = getIdFromToken(bearerToken);
-
-        return cartRepository.save(CartItem.builder()
-                .itemId(itemId)
-                .userId(userId)
-                .quantity(quantity)
-                .build());
+        Optional<CartItem> cartItem = cartRepository.findCartItemByUserIdAndItemId(userId,itemId);
+        if (cartItem.isPresent()) {
+            cartItem.get().setQuantity(cartItem.get().getQuantity() + quantity);
+            return cartRepository.save(cartItem.get());
+        } else {
+            return cartRepository.save(CartItem.builder()
+                    .itemId(itemId)
+                    .userId(userId)
+                    .quantity(quantity)
+                    .build());
+        }
     }
 
     public List<CartItemDto> getCartItems(String bearerToken) {
@@ -66,7 +71,8 @@ public class CartService {
                 .map(cartItem -> {
                     MenuItemInfoResponse menuItemInfo = getInfo(cartItem.getItemId());
                     return CartItemDto.builder()
-                            .name(menuItemInfo.getName())
+                            .itemId(cartItem.getItemId())
+                            .title(menuItemInfo.getTitle())
                             .price(menuItemInfo.getPrice())
                             .quantity(cartItem.getQuantity())
                             .grams(menuItemInfo.getGrams())
@@ -74,13 +80,13 @@ public class CartService {
                 }).toList();
     }
 
-    public void removeCartItem(long itemId, String bearerToken) {
+    public void removeCartItem(long itemId, int quantity, String bearerToken) {
         long userId = getIdFromToken(bearerToken);
         CartItem cartItem = cartRepository.findCartItemByUserIdAndItemId(userId, itemId).orElseThrow(
                 () -> new RuntimeException("Cannot find cart item with id " + itemId + " for user " + userId)
         );
-        if (cartItem.getQuantity() > 1) {
-            cartItem.setQuantity(cartItem.getQuantity() - 1);
+        if (cartItem.getQuantity() > quantity) {
+            cartItem.setQuantity(cartItem.getQuantity() - quantity);
             cartRepository.save(cartItem);
         } else {
             cartRepository.delete(cartItem);
@@ -109,7 +115,7 @@ public class CartService {
             var orderItem = orderItemRepository.save(
                     OrderItem.builder()
                             .order(order)
-                            .itemName(info.getName())
+                            .itemName(info.getTitle())
                             .itemDescription(info.getDescription())
                             .unitPrice(info.getPrice())
                             .unitGrams(info.getGrams())
@@ -128,7 +134,7 @@ public class CartService {
     }
 
     private MenuItemInfoResponse getInfo(long itemId) {
-        String getItemUrl = restaurantServiceUrl + "/" + itemId;
+        String getItemUrl = restaurantServiceUrl + "/menu/" + itemId;
         ResponseEntity<MenuItemInfoResponse> checkResponse = restTemplate.getForEntity(getItemUrl, MenuItemInfoResponse.class);
         if (checkResponse.getStatusCode() != HttpStatus.OK) {
             throw new RuntimeException("failed to get item with id " + itemId);
@@ -141,7 +147,7 @@ public class CartService {
         headers.set("Authorization", bearerToken);
         HttpEntity<Object> entity = new HttpEntity<>(null, headers);
 
-        String parseIdUrl = authServiceUrl + "/parse_id";
+        String parseIdUrl = authServiceUrl + "/auth/parse_id";
         ResponseEntity<Long> parseIdResponse = restTemplate.postForEntity(parseIdUrl, entity, Long.class);
         if (parseIdResponse.getStatusCode() != HttpStatus.OK) {
             throw new RuntimeException("Check jwt failed");

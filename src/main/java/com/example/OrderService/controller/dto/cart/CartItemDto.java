@@ -6,7 +6,8 @@ import lombok.Data;
 @Builder
 @Data
 public class CartItemDto {
-    private String name;
+    private long itemId;
+    private String title;
     private int price;
     private int quantity;
     private int grams;
