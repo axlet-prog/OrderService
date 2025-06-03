@@ -1,7 +1,7 @@
 package com.example.OrderService.mapper;
 
-import com.example.OrderService.controller.dto.CartItemDto;
-import com.example.OrderService.controller.dto.CartResponseDto;
+import com.example.OrderService.controller.dto.cart.CartItemDto;
+import com.example.OrderService.controller.dto.cart.CartResponseDto;
 
 import java.util.List;
 

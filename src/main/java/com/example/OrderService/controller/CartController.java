@@ -1,8 +1,8 @@
 package com.example.OrderService.controller;
 
-import com.example.OrderService.controller.dto.CartItemDto;
-import com.example.OrderService.controller.dto.CartResponseDto;
-import com.example.OrderService.controller.dto.OrderResponse;
+import com.example.OrderService.controller.dto.cart.CartItemDto;
+import com.example.OrderService.controller.dto.cart.CartResponseDto;
+import com.example.OrderService.controller.dto.order.OrderResponse;
 import com.example.OrderService.mapper.CartMapper;
 import com.example.OrderService.service.CartService;
 import jakarta.validation.constraints.Min;
@@ -25,8 +25,8 @@ public class CartController {
 
     @GetMapping
     public ResponseEntity<CartResponseDto> getCart(@RequestHeader("Authorization") String bearerToken) {
-
         List<CartItemDto> items = cartService.getCartItems(bearerToken);
+        System.out.println("Request to GET /cart");
         return ResponseEntity.ok(CartMapper.mapListCartItemsDtoToResponse(items));
     }
 

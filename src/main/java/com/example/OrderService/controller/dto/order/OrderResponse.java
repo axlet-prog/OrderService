@@ -1,4 +1,4 @@
-package com.example.OrderService.controller.dto;
+package com.example.OrderService.controller.dto.order;
 
 import com.example.OrderService.entity.OrderStatus;
 import lombok.AllArgsConstructor;
@@ -14,14 +14,10 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 public class OrderResponse {
-
-    long id;
-
-    LocalDateTime initDate;
-
-    OrderStatus status;
-
-    int totalPrice;
-
-    List<OrderItemDto> orderItems;
+    private long id;
+    private long customerId;
+    private LocalDateTime initDate;
+    private OrderStatus status;
+    private int totalPrice;
+    private List<OrderItemDto> orderItems;
 }

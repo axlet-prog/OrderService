@@ -1,4 +1,4 @@
-package com.example.OrderService.controller.dto;
+package com.example.OrderService.controller.dto.cart;
 
 import lombok.Data;
 

@@ -1,8 +1,8 @@
 package com.example.OrderService.service;
 
-import com.example.OrderService.controller.dto.CartItemDto;
-import com.example.OrderService.controller.dto.MenuItemInfoResponse;
-import com.example.OrderService.controller.dto.OrderResponse;
+import com.example.OrderService.controller.dto.cart.CartItemDto;
+import com.example.OrderService.controller.dto.cart.MenuItemInfoResponse;
+import com.example.OrderService.controller.dto.order.OrderResponse;
 import com.example.OrderService.entity.CartItem;
 import com.example.OrderService.entity.Order;
 import com.example.OrderService.entity.OrderItem;
@@ -31,9 +31,10 @@ public class CartService {
     private final OrderItemRepository orderItemRepository;
     private final RestTemplate restTemplate;
     private final CartRepository cartRepository;
+
     @Value("${services.restaurant-service.url}")
     private String restaurantServiceUrl;
-    @Value("${services.restaurant-service.url}")
+    @Value("${services.auth-service.url}")
     private String authServiceUrl;
 
     public CartService(RestTemplate restTemplate, CartRepository cartRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
@@ -61,7 +62,7 @@ public class CartService {
         if (cartItems.isEmpty()) {
             return new ArrayList<>();
         }
-        List<CartItemDto> cartItemDtos = cartItems.get().stream()
+        return cartItems.get().stream()
                 .map(cartItem -> {
                     MenuItemInfoResponse menuItemInfo = getInfo(cartItem.getItemId());
                     return CartItemDto.builder()
@@ -71,7 +72,6 @@ public class CartService {
                             .grams(menuItemInfo.getGrams())
                             .build();
                 }).toList();
-        return cartItemDtos;
     }
 
     public void removeCartItem(long itemId, String bearerToken) {
@@ -149,6 +149,4 @@ public class CartService {
 
         return parseIdResponse.getBody();
     }
-
-
 }

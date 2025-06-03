@@ -1,7 +1,7 @@
 package com.example.OrderService.mapper;
 
-import com.example.OrderService.controller.dto.OrderItemDto;
-import com.example.OrderService.controller.dto.OrderResponse;
+import com.example.OrderService.controller.dto.order.OrderItemDto;
+import com.example.OrderService.controller.dto.order.OrderResponse;
 import com.example.OrderService.entity.Order;
 import com.example.OrderService.entity.OrderItem;
 
@@ -30,6 +30,7 @@ public class OrderMapper {
 
         return new OrderResponse(
                 order.getId(),
+                order.getUserId(),
                 order.getOrderInitDate(),
                 order.getOrderStatus(),
                 totalPrice,
