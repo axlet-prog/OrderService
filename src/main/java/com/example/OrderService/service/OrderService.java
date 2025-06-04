@@ -13,30 +13,44 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 @Service
 public class OrderService {
 
-    @Value("${services.auth-service.url}")
-    private String authServiceUrl;
-
-    private final RestTemplate restTemplate;
+    private final NetworkService networkService;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
-    public OrderService(RestTemplate restTemplate, OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
-        this.restTemplate = restTemplate;
+    public OrderService(RestTemplate restTemplate, NetworkService networkService, OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
+        this.networkService = networkService;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
     }
 
     public OrderListResponse getAllOrders(String bearerToken, Set<OrderStatus> statuses) {
+        String role = networkService.getUserRole(bearerToken);
         Specification<Order> orderSpecification = OrderSpecification.hasStatusIn(statuses);
 
+        List<Order> orderList;
 
-        List<Order> orderList = orderRepository.findAll(orderSpecification);
+        switch (role) {
+            case "ROLE_ADMIN" -> {
+                 orderList = orderRepository.findAll(orderSpecification);
+            }
+            case "ROLE_CLIENT" -> {
+                long userId = networkService.getIdFromToken(bearerToken);
+                orderList = orderRepository.findOrdersByUserId(userId).orElse(new ArrayList<>());
+            }
+            case "ROLE_COURIER" -> {
+                //TODO()
+                orderList = new ArrayList<>();
+            }
+            default -> throw new RuntimeException("Invalid role");
+        }
+
         return new OrderListResponse(orderList);
     }
 

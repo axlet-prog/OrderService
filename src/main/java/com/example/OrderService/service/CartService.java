@@ -11,11 +11,6 @@ import com.example.OrderService.mapper.OrderMapper;
 import com.example.OrderService.repository.CartRepository;
 import com.example.OrderService.repository.OrderItemRepository;
 import com.example.OrderService.repository.OrderRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -30,25 +25,21 @@ public class CartService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final RestTemplate restTemplate;
     private final CartRepository cartRepository;
+    private final NetworkService networkService;
 
-    @Value("${services.restaurant-service.url}")
-    private String restaurantServiceUrl;
-    @Value("${services.auth-service.url}")
-    private String authServiceUrl;
 
-    public CartService(RestTemplate restTemplate, CartRepository cartRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
-        this.restTemplate = restTemplate;
+    public CartService(RestTemplate restTemplate, CartRepository cartRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, NetworkService networkService) {
         this.cartRepository = cartRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.networkService = networkService;
     }
 
     public CartItem addCardItem(long itemId, int quantity, String bearerToken) {
-        getInfo(itemId);
-        long userId = getIdFromToken(bearerToken);
-        Optional<CartItem> cartItem = cartRepository.findCartItemByUserIdAndItemId(userId,itemId);
+        networkService.getInfo(itemId);
+        long userId = networkService.getIdFromToken(bearerToken);
+        Optional<CartItem> cartItem = cartRepository.findCartItemByUserIdAndItemId(userId, itemId);
         if (cartItem.isPresent()) {
             cartItem.get().setQuantity(cartItem.get().getQuantity() + quantity);
             return cartRepository.save(cartItem.get());
@@ -62,7 +53,7 @@ public class CartService {
     }
 
     public List<CartItemDto> getCartItems(String bearerToken) {
-        long userId = getIdFromToken(bearerToken);
+        long userId = networkService.getIdFromToken(bearerToken);
 
         Optional<List<CartItem>> cartItems = cartRepository.findAllByUserId(userId);
         if (cartItems.isEmpty()) {
@@ -70,7 +61,7 @@ public class CartService {
         }
         return cartItems.get().stream()
                 .map(cartItem -> {
-                    MenuItemInfoResponse menuItemInfo = getInfo(cartItem.getItemId());
+                    MenuItemInfoResponse menuItemInfo = networkService.getInfo(cartItem.getItemId());
                     return CartItemDto.builder()
                             .itemId(cartItem.getItemId())
                             .title(menuItemInfo.getTitle())
@@ -82,7 +73,7 @@ public class CartService {
     }
 
     public void removeCartItem(long itemId, int quantity, String bearerToken) {
-        long userId = getIdFromToken(bearerToken);
+        long userId = networkService.getIdFromToken(bearerToken);
         CartItem cartItem = cartRepository.findCartItemByUserIdAndItemId(userId, itemId).orElseThrow(
                 () -> new RuntimeException("Cannot find cart item with id " + itemId + " for user " + userId)
         );
@@ -96,7 +87,7 @@ public class CartService {
 
     @Transactional
     public OrderResponse createOrderFromCart(String bearerToken) {
-        long userId = getIdFromToken(bearerToken);
+        long userId = networkService.getIdFromToken(bearerToken);
         List<CartItem> cartItems = cartRepository.findAllByUserId(userId).orElseThrow(
                 () -> new RuntimeException("Cannot find cart for user " + userId)
         );
@@ -113,7 +104,7 @@ public class CartService {
         List<OrderItem> orderItems = new ArrayList<>();
 
         cartItems.forEach(cartItem -> {
-            var info = getInfo(cartItem.getItemId());
+            var info = networkService.getInfo(cartItem.getItemId());
             var orderItem = orderItemRepository.save(
                     OrderItem.builder()
                             .order(order)
@@ -131,28 +122,5 @@ public class CartService {
         return OrderMapper.mapToOrderResponse(
                 order, orderItems
         );
-    }
-
-    private MenuItemInfoResponse getInfo(long itemId) {
-        String getItemUrl = restaurantServiceUrl + "/menu/" + itemId;
-        ResponseEntity<MenuItemInfoResponse> checkResponse = restTemplate.getForEntity(getItemUrl, MenuItemInfoResponse.class);
-        if (checkResponse.getStatusCode() != HttpStatus.OK) {
-            throw new RuntimeException("failed to get item with id " + itemId);
-        }
-        return checkResponse.getBody();
-    }
-
-    private long getIdFromToken(String bearerToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", bearerToken);
-        HttpEntity<Object> entity = new HttpEntity<>(null, headers);
-
-        String parseIdUrl = authServiceUrl + "/auth/parse_id";
-        ResponseEntity<Long> parseIdResponse = restTemplate.postForEntity(parseIdUrl, entity, Long.class);
-        if (parseIdResponse.getStatusCode() != HttpStatus.OK) {
-            throw new RuntimeException("Check jwt failed");
-        }
-
-        return parseIdResponse.getBody();
     }
 }

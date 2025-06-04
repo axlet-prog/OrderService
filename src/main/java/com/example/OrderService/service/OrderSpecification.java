@@ -14,7 +14,7 @@ public class OrderSpecification {
             if (statuses == null || statuses.isEmpty()) {
                 return criteriaBuilder.conjunction(); // No filtering if no statuses are provided
             }
-            return root.get("order_status").in(statuses);
+            return root.get("orderStatus").in(statuses);
         };
     }
 

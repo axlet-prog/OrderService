@@ -6,6 +6,7 @@ import com.example.OrderService.controller.dto.order.OrderResponse;
 import com.example.OrderService.mapper.CartMapper;
 import com.example.OrderService.service.CartService;
 import jakarta.validation.constraints.Min;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +24,18 @@ public class CartController {
         this.cartService = cartService;
     }
 
+    @Value("${services.auth-service.url}")
+    private String authServiceUrl;
+
+    @Value("${services.restaurant-service.url}")
+    private String restaurantServiceUrl;
+
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
-        return ResponseEntity.ok("pong");
+        System.out.println(authServiceUrl);
+        System.out.println(restaurantServiceUrl);
+
+        return ResponseEntity.ok("pong " + authServiceUrl + " " + restaurantServiceUrl);
     }
 
     @GetMapping
