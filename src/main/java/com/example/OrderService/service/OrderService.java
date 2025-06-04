@@ -4,14 +4,17 @@ import com.example.OrderService.controller.dto.order.OrderListResponse;
 import com.example.OrderService.controller.dto.order.OrderResponse;
 import com.example.OrderService.entity.Order;
 import com.example.OrderService.entity.OrderItem;
+import com.example.OrderService.entity.OrderStatus;
 import com.example.OrderService.mapper.OrderMapper;
 import com.example.OrderService.repository.OrderItemRepository;
 import com.example.OrderService.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class OrderService {
@@ -29,8 +32,11 @@ public class OrderService {
         this.orderItemRepository = orderItemRepository;
     }
 
-    public OrderListResponse getAllOrders() {
-        List<Order> orderList = orderRepository.findAll();
+    public OrderListResponse getAllOrders(String bearerToken, Set<OrderStatus> statuses) {
+        Specification<Order> orderSpecification = OrderSpecification.hasStatusIn(statuses);
+
+
+        List<Order> orderList = orderRepository.findAll(orderSpecification);
         return new OrderListResponse(orderList);
     }
 
