@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
@@ -93,6 +94,7 @@ public class CartService {
         }
     }
 
+    @Transactional
     public OrderResponse createOrderFromCart(String bearerToken) {
         long userId = getIdFromToken(bearerToken);
         List<CartItem> cartItems = cartRepository.findAllByUserId(userId).orElseThrow(
@@ -122,15 +124,13 @@ public class CartService {
                             .quantity(cartItem.getQuantity())
                             .build()
             );
+            cartRepository.delete(cartItem);
             orderItems.add(orderItem);
         });
 
-        var response = OrderMapper.mapToOrderResponse(
+        return OrderMapper.mapToOrderResponse(
                 order, orderItems
         );
-
-        cartRepository.deleteAllByUserId(userId);
-        return response;
     }
 
     private MenuItemInfoResponse getInfo(long itemId) {
