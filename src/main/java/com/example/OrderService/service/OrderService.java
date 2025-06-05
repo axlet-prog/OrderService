@@ -45,7 +45,11 @@ public class OrderService {
             case "ROLE_COURIER" -> {
                 List<OrderCouriers> orderCouriers = orderCourierRepository.findAllByCourierId(userId).orElse(new ArrayList<>());
                 orderList = new ArrayList<>();
-                orderCouriers.forEach(orderCourier -> orderList.add(orderCourier.getOrder()));
+                orderCouriers.forEach(orderCourier -> {
+                    if (statuses.contains(orderCourier.getOrder().getOrderStatus())) {
+                        orderList.add(orderCourier.getOrder());
+                    }
+                });
             }
             default -> throw new RuntimeException("Invalid role");
         }
