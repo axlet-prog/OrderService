@@ -1,13 +1,13 @@
 package com.example.OrderService.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @NoArgsConstructor
 @Builder
+@Getter
+@Setter
 @AllArgsConstructor
 public class OrderCouriers {
 
@@ -15,9 +15,9 @@ public class OrderCouriers {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
-    long courierId;
+    private long courierId;
 
     @OneToOne
     @JoinColumn(name = "order_id", referencedColumnName = "id")
-    Order order;
+    private Order order;
 }

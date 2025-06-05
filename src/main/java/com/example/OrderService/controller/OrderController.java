@@ -15,6 +15,7 @@ import java.util.Set;
 public class OrderController {
 
     private final OrderService orderService;
+
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
     }
@@ -31,12 +32,18 @@ public class OrderController {
     public ResponseEntity<OrderResponse> getOrderInfo(
             @RequestHeader("Authorization") String bearerToken,
             @PathVariable int id) {
-        return ResponseEntity.ok(orderService.getOrderById(bearerToken,id));
+        return ResponseEntity.ok(orderService.getOrderById(bearerToken, id));
     }
 
     @PostMapping("/{id}/assign")
     public ResponseEntity<Void> assignToCourier(@PathVariable long id, @RequestBody AssignOrderRequest request) {
         orderService.assignOrder(id, request.getCourierId());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/set_status")
+    public ResponseEntity<Void> setOrderStatus(@PathVariable("id") long orderId, @RequestParam("status") OrderStatus status) {
+        orderService.changeOrderStatus(orderId, status);
         return ResponseEntity.ok().build();
     }
 }
