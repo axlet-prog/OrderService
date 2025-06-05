@@ -12,7 +12,6 @@ import com.example.OrderService.repository.OrderItemRepository;
 import com.example.OrderService.repository.OrderRepository;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,23 +33,19 @@ public class OrderService {
     }
 
     public OrderListResponse getAllOrders(String bearerToken, Set<OrderStatus> statuses) {
-        String role = networkService.getUserRole(bearerToken);
+        String role = networkService.getUserRoleByToken(bearerToken);
         Specification<Order> orderSpecification = OrderSpecification.hasStatusIn(statuses);
 
         List<Order> orderList;
 
         switch (role) {
-            case "ROLE_ADMIN" -> {
-                orderList = orderRepository.findAll(orderSpecification);
-            }
+            case "ROLE_ADMIN" -> orderList = orderRepository.findAll(orderSpecification);
             case "ROLE_CLIENT" -> {
                 long userId = networkService.getIdFromToken(bearerToken);
                 orderList = orderRepository.findOrdersByUserId(userId).orElse(new ArrayList<>());
             }
-            case "ROLE_COURIER" -> {
-                //TODO()
-                orderList = new ArrayList<>();
-            }
+            case "ROLE_COURIER" -> orderList = new ArrayList<>();
+
             default -> throw new RuntimeException("Invalid role");
         }
 
@@ -58,7 +53,7 @@ public class OrderService {
     }
 
     public OrderResponse getOrderById(String bearerToken, long id) {
-        String userRole = networkService.getUserRole(bearerToken);
+        String userRole = networkService.getUserRoleByToken(bearerToken);
         Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
         switch (userRole) {
             case "ROLE_CLIENT" -> {
@@ -67,7 +62,8 @@ public class OrderService {
                     throw new RuntimeException("Invalid user id");
                 }
             }
-            case "ROLE_ADMIN" -> {}
+            case "ROLE_ADMIN" -> {
+            }
             case "ROLE_COURIER" -> {
 
             }
@@ -80,7 +76,10 @@ public class OrderService {
     }
 
     public void assignOrder(long orderId, long courierId) {
-        //TODO(сделать проверку на существование курьера)
+        String role = networkService.getUserRoleById(courierId);
+        if (!role.equals("ROLE_COURIER")) {
+            throw new RuntimeException("Invalid role for assign order");
+        }
 
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
 
@@ -93,7 +92,7 @@ public class OrderService {
 
         order.setOrderStatus(OrderStatus.IN_PROGRESS);
         orderRepository.save(
-                  order
+                order
         );
     }
 }

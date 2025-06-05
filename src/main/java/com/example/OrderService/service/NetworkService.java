@@ -46,7 +46,7 @@ public class NetworkService {
         return parseIdResponse.getBody();
     }
 
-    public String getUserRole(String bearerToken) {
+    public String getUserRoleByToken(String bearerToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", bearerToken);
         HttpEntity<Object> entity = new HttpEntity<>(null, headers);
@@ -57,6 +57,15 @@ public class NetworkService {
             throw new RuntimeException("Check jwt failed");
         }
 
+        return parseIdResponse.getBody();
+    }
+
+    public String getUserRoleById(long userId) {
+        String parseIdUrl = authServiceUrl + "/auth/parse_role/" + userId;
+        ResponseEntity<String> parseIdResponse = restTemplate.postForEntity(parseIdUrl, null, String.class);
+        if (parseIdResponse.getStatusCode() != HttpStatus.OK) {
+            throw new RuntimeException("Check jwt failed");
+        }
         return parseIdResponse.getBody();
     }
 }
