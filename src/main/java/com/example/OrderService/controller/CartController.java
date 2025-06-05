@@ -2,6 +2,7 @@ package com.example.OrderService.controller;
 
 import com.example.OrderService.controller.dto.cart.CartItemDto;
 import com.example.OrderService.controller.dto.cart.CartResponseDto;
+import com.example.OrderService.controller.dto.cart.CreateOrderFromCartRequest;
 import com.example.OrderService.controller.dto.order.OrderResponse;
 import com.example.OrderService.mapper.CartMapper;
 import com.example.OrderService.service.CartService;
@@ -62,8 +63,9 @@ public class CartController {
 
     @PostMapping("/create_order")
     public ResponseEntity<OrderResponse> createOrder(
-            @RequestHeader("Authorization") String bearerToken
-    ) {
-        return ResponseEntity.ok(cartService.createOrderFromCart(bearerToken));
+            @RequestHeader("Authorization") String bearerToken,
+            @RequestBody CreateOrderFromCartRequest request
+            ) {
+        return ResponseEntity.ok(cartService.createOrderFromCart(bearerToken, request));
     }
 }

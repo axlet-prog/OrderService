@@ -1,9 +1,6 @@
 package com.example.OrderService.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -20,5 +17,7 @@ public class OrderCouriers {
 
     long courierId;
 
-    long orderId;
+    @OneToOne
+    @JoinColumn(name = "order_id", referencedColumnName = "id")
+    Order order;
 }

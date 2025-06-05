@@ -1,6 +1,7 @@
 package com.example.OrderService.service;
 
 import com.example.OrderService.controller.dto.cart.CartItemDto;
+import com.example.OrderService.controller.dto.cart.CreateOrderFromCartRequest;
 import com.example.OrderService.controller.dto.cart.MenuItemInfoResponse;
 import com.example.OrderService.controller.dto.order.OrderResponse;
 import com.example.OrderService.entity.CartItem;
@@ -86,16 +87,21 @@ public class CartService {
     }
 
     @Transactional
-    public OrderResponse createOrderFromCart(String bearerToken) {
+    public OrderResponse createOrderFromCart(String bearerToken, CreateOrderFromCartRequest request) {
         long userId = networkService.getIdFromToken(bearerToken);
         List<CartItem> cartItems = cartRepository.findAllByUserId(userId).orElseThrow(
                 () -> new RuntimeException("Cannot find cart for user " + userId)
         );
 
+        if (cartItems.isEmpty()) {
+            throw new RuntimeException("В корзине должна быть хотя бы 1 позиция");
+        }
+
         Order order = Order.builder()
                 .userId(userId)
                 .orderInitDate(LocalDateTime.now())
                 .orderFinishDate(null)
+                .deliveryAddress(request.getDeliveryAddress())
                 .orderStatus(OrderStatus.INIT)
                 .build();
 

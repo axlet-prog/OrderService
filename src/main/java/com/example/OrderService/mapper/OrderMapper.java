@@ -21,7 +21,7 @@ public class OrderMapper {
     public static OrderResponse mapToOrderResponse(Order order, List<OrderItem> orderItems) {
         int totalPrice = 0;
         for (OrderItem orderItem : orderItems) {
-            totalPrice += orderItem.getQuantity();
+            totalPrice += orderItem.getUnitPrice() * orderItem.getQuantity();
         }
 
         List<OrderItemDto> orderItemDtos = orderItems.stream()
@@ -31,6 +31,7 @@ public class OrderMapper {
         return new OrderResponse(
                 order.getId(),
                 order.getUserId(),
+                order.getDeliveryAddress(),
                 order.getOrderInitDate(),
                 order.getOrderStatus(),
                 totalPrice,

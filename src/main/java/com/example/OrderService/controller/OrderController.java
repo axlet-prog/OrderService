@@ -28,13 +28,15 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponse> getOrderInfo(@PathVariable int id) {
-        return ResponseEntity.ok(orderService.getOrderById(id));
+    public ResponseEntity<OrderResponse> getOrderInfo(
+            @RequestHeader("Authorization") String bearerToken,
+            @PathVariable int id) {
+        return ResponseEntity.ok(orderService.getOrderById(bearerToken,id));
     }
 
-//    @PostMapping("/{id}/assign")
-//    public ResponseEntity<Void> assignToCourier(@PathVariable long id, @RequestBody AssignOrderRequest request) {
-//
-//
-//    }
+    @PostMapping("/{id}/assign")
+    public ResponseEntity<Void> assignToCourier(@PathVariable long id, @RequestBody AssignOrderRequest request) {
+        orderService.assignOrder(id, request.getCourierId());
+        return ResponseEntity.ok().build();
+    }
 }

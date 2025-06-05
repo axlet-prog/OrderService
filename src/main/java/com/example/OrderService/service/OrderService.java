@@ -3,12 +3,13 @@ package com.example.OrderService.service;
 import com.example.OrderService.controller.dto.order.OrderListResponse;
 import com.example.OrderService.controller.dto.order.OrderResponse;
 import com.example.OrderService.entity.Order;
+import com.example.OrderService.entity.OrderCouriers;
 import com.example.OrderService.entity.OrderItem;
 import com.example.OrderService.entity.OrderStatus;
 import com.example.OrderService.mapper.OrderMapper;
+import com.example.OrderService.repository.OrderCourierRepository;
 import com.example.OrderService.repository.OrderItemRepository;
 import com.example.OrderService.repository.OrderRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -23,11 +24,13 @@ public class OrderService {
     private final NetworkService networkService;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final OrderCourierRepository orderCourierRepository;
 
-    public OrderService(RestTemplate restTemplate, NetworkService networkService, OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
+    public OrderService(NetworkService networkService, OrderRepository orderRepository, OrderItemRepository orderItemRepository, OrderCourierRepository orderCourierRepository) {
         this.networkService = networkService;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.orderCourierRepository = orderCourierRepository;
     }
 
     public OrderListResponse getAllOrders(String bearerToken, Set<OrderStatus> statuses) {
@@ -38,7 +41,7 @@ public class OrderService {
 
         switch (role) {
             case "ROLE_ADMIN" -> {
-                 orderList = orderRepository.findAll(orderSpecification);
+                orderList = orderRepository.findAll(orderSpecification);
             }
             case "ROLE_CLIENT" -> {
                 long userId = networkService.getIdFromToken(bearerToken);
@@ -54,8 +57,22 @@ public class OrderService {
         return new OrderListResponse(orderList);
     }
 
-    public OrderResponse getOrderById(long id) {
+    public OrderResponse getOrderById(String bearerToken, long id) {
+        String userRole = networkService.getUserRole(bearerToken);
         Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
+        switch (userRole) {
+            case "ROLE_CLIENT" -> {
+                long userId = networkService.getIdFromToken(bearerToken);
+                if (order.getUserId() != userId) {
+                    throw new RuntimeException("Invalid user id");
+                }
+            }
+            case "ROLE_ADMIN" -> {}
+            case "ROLE_COURIER" -> {
+
+            }
+            default -> throw new RuntimeException("Invalid role");
+        }
 
         List<OrderItem> orderItemList = orderItemRepository.findAllByOrder(order).orElseThrow(() -> new RuntimeException("Order not found"));
 
@@ -63,6 +80,20 @@ public class OrderService {
     }
 
     public void assignOrder(long orderId, long courierId) {
+        //TODO(сделать проверку на существование курьера)
 
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+
+        orderCourierRepository.save(
+                OrderCouriers.builder()
+                        .order(order)
+                        .courierId(courierId)
+                        .build()
+        );
+
+        order.setOrderStatus(OrderStatus.IN_PROGRESS);
+        orderRepository.save(
+                  order
+        );
     }
 }
